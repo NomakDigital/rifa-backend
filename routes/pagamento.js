@@ -40,3 +40,12 @@ router.post("/criar", async (req, res) => {
 });
 
 module.exports = router;
+
+const express = require("express");
+const router = express.Router();
+
+router.get("/", (req, res) => {
+  res.json({ msg: "rota pagamento ok" });
+});
+
+module.exports = router;
