@@ -17,3 +17,10 @@ app.use("/campanha", require("./routes/campanha"));
 app.use("/pagamento", require("./routes/pagamento"));
 
 app.listen(3000, () => console.log("Servidor rodando"));
+
+app.use("/campanha", require("./routes/campanha"));
+app.use("/pagamento", require("./routes/pagamento"));
+
+app.get("/", (req, res) => {
+  res.send("API Rifa rodando 🚀");
+});
