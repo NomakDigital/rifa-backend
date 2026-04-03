@@ -9,19 +9,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// conectar mongo
+// conexão com banco
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("Mongo conectado"))
   .catch(err => console.log(err));
 
-// ROTAS
+// rotas
 app.use("/campanha", require("./routes/campanha"));
 app.use("/pagamento", require("./routes/pagamento"));
 
-// ROTA PRINCIPAL (IMPORTANTE)
+// rota raiz
 app.get("/", (req, res) => {
-  res.send("API Rifa rodando 🚀");
+  res.send("API rodando 🚀");
 });
 
-// INICIAR SERVIDOR (SEMPRE POR ÚLTIMO)
+// iniciar servidor
 app.listen(3000, () => console.log("Servidor rodando"));
