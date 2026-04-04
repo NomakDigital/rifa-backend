@@ -1,15 +1,13 @@
 const express = require("express");
 const router = express.Router();
+const mercadopago = require("mercadopago");
 
-const { MercadoPagoConfig, Payment } = require("mercadopago");
-
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_TOKEN
+mercadopago.configure({
+  access_token: process.env.MP_TOKEN
 });
 
 const Pedido = require("../models/Pedido");
 
-// CRIAR PIX REAL
 router.post("/criar", async (req, res) => {
   try {
     const { nome, campanhaId, qtd } = req.body;
@@ -19,7 +17,7 @@ router.post("/criar", async (req, res) => {
       numeros.push(Math.floor(Math.random() * 10000));
     }
 
-    const valor = qtd * 5; // evita erro com valor baixo
+    const valor = qtd * 5;
 
     const pedido = await Pedido.create({
       nome,
@@ -28,20 +26,14 @@ router.post("/criar", async (req, res) => {
       valor
     });
 
-    const payment = new Payment(client);
-
-    const result = await payment.create({
-      body: {
-        transaction_amount: valor,
-        description: "Compra de números",
-        payment_method_id: "pix",
-        payer: {
-          email: "teste@test.com"
-        }
-      }
+    const pagamento = await mercadopago.payment.create({
+      transaction_amount: valor,
+      description: "Compra de números",
+      payment_method_id: "pix",
+      payer: { email: "teste@test.com" }
     });
 
-    const pixData = result.point_of_interaction?.transaction_data;
+    const pixData = pagamento.body.point_of_interaction?.transaction_data;
 
     res.json({
       pix: pixData?.qr_code || "erro ao gerar pix",
