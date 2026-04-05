@@ -30,6 +30,7 @@ router.post("/criar", async (req, res) => {
 
     // criar pagamento PIX
     const pagamento = await mercadopago.payment.create({
+      const dadosPix = pagamento.body.point_of_interaction.transaction_data;
       transaction_amount: valor,
       description: "Compra de números",
       payment_method_id: "pix",
@@ -42,12 +43,10 @@ router.post("/criar", async (req, res) => {
 
     const pixData = pagamento.body.point_of_interaction?.transaction_data;
 
-    res.json({
-      pix: pixData?.qr_code,
-      copiaCola: pixData?.qr_code,
-      qrCodeBase64: pixData?.qr_code_base64,
-      pedidoId: pedido._id
-    });
+  res.json({
+  qr_code: dadosPix.qr_code,
+  qr_code_base64: dadosPix.qr_code_base64
+});
 
   } catch (err) {
     console.log("❌ ERRO PIX:", err);
