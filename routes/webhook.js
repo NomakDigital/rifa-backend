@@ -2,11 +2,12 @@ const express = require("express");
 const router = express.Router();
 const mercadopago = require("mercadopago");
 
-const Pedido = require("../models/Pedido");
-
 mercadopago.configure({
   access_token: process.env.MP_TOKEN
 });
+
+const Pedido = require("../models/Pedido");
+const Campanha = require("../models/Campanha");
 
 router.post("/", async (req, res) => {
   try {
@@ -22,11 +23,16 @@ router.post("/", async (req, res) => {
           pagamentoId: paymentId
         });
 
-        if (pedido) {
+        if (pedido && pedido.status !== "pago") {
           pedido.status = "pago";
           await pedido.save();
 
-          console.log("✅ PAGAMENTO APROVADO:", paymentId);
+          const campanha = await Campanha.findById(pedido.campanhaId);
+
+          campanha.numerosVendidos.push(...pedido.numeros);
+          await campanha.save();
+
+          console.log("✅ PAGAMENTO CONFIRMADO:", paymentId);
         }
       }
     }
