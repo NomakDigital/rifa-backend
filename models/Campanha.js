@@ -1,17 +1,17 @@
-const mongoose = require("mongoose");
+const express = require("express");
+const router = express.Router();
+const Campanha = require("../models/Campanha");
 
-const CampanhaSchema = new mongoose.Schema({
-  nome: String,
-  preco: Number,
-  numerosTotal: {
-    type: Number,
-    default: 10000
-  },
-  numerosVendidos: {
-    type: [Number],
-    default: []
+// LISTAR CAMPANHAS
+router.get("/", async (req, res) => {
+  try {
+    const campanhas = await Campanha.find();
+
+    res.json(campanhas); // 🔥 ISSO AQUI RESOLVE
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ erro: "Erro ao buscar campanhas" });
   }
 });
 
-// 🔥 CORREÇÃO AQUI
-module.exports = mongoose.models.Campanha || mongoose.model("Campanha", CampanhaSchema);
+module.exports = router;
