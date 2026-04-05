@@ -38,28 +38,21 @@ router.post("/criar", async (req, res) => {
       }
     });
 
-    // 🔥 LOG PRA DEBUG
-    console.log("RESPOSTA MP:", JSON.stringify(pagamento.body, null, 2));
+    console.log("RESPOSTA MP:", pagamento.body);
 
     const pixData = pagamento.body.point_of_interaction?.transaction_data;
 
     res.json({
-      pix: pixData?.qr_code || "erro ao gerar pix",
-      qrCodeBase64: pixData?.qr_code_base64 || null,
+      pix: pixData?.qr_code,
+      copiaCola: pixData?.qr_code,
+      qrCodeBase64: pixData?.qr_code_base64,
       pedidoId: pedido._id
     });
 
   } catch (err) {
-    console.log("ERRO PIX:", err);
-    res.status(500).json({
-      erro: "Erro ao gerar PIX",
-      detalhe: err.message
-    });
+    console.log("❌ ERRO PIX:", err);
+    res.status(500).json({ erro: "Erro ao gerar PIX" });
   }
-});
-
-router.get("/", (req, res) => {
-  res.json({ msg: "rota pagamento ok" });
 });
 
 module.exports = router;
