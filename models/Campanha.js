@@ -1,12 +1,17 @@
-
 const mongoose = require("mongoose");
 
-const Campanha = mongoose.model("Campanha", {
+const CampanhaSchema = new mongoose.Schema({
   nome: String,
-  imagem: String,
   preco: Number,
-  totalNumeros: Number,
-  vendidos: { type: Number, default: 0 }
+  numerosTotal: {
+    type: Number,
+    default: 10000
+  },
+  numerosVendidos: {
+    type: [Number],
+    default: []
+  }
 });
 
-module.exports = Campanha;
+// 🔥 CORREÇÃO AQUI
+module.exports = mongoose.models.Campanha || mongoose.model("Campanha", CampanhaSchema);
