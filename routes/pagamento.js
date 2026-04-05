@@ -7,20 +7,43 @@ mercadopago.configure({
 });
 
 const Pedido = require("../models/Pedido");
+const Campanha = require("../models/Campanha");
 
 router.post("/criar", async (req, res) => {
   try {
     const { nome, campanhaId, qtd } = req.body;
 
-    // gerar números
-    const numeros = [];
-    for (let i = 0; i < qtd; i++) {
-      numeros.push(Math.floor(Math.random() * 10000));
+    const campanha = await Campanha.findById(campanhaId);
+
+    if (!campanha) {
+      return res.status(404).json({ error: "Campanha não encontrada" });
     }
 
-    const valor = qtd * 5;
+    // pegar pedidos pendentes
+    const pedidosPendentes = await Pedido.find({
+      campanhaId,
+      status: "pendente"
+    });
 
-    // salvar pedido
+    let numerosUsados = [
+      ...campanha.numerosVendidos,
+      ...pedidosPendentes.flatMap(p => p.numeros)
+    ];
+
+    // gerar números únicos
+    const numeros = [];
+
+    while (numeros.length < qtd) {
+      const num = Math.floor(Math.random() * campanha.numerosTotal);
+
+      if (!numerosUsados.includes(num)) {
+        numeros.push(num);
+        numerosUsados.push(num);
+      }
+    }
+
+    const valor = qtd * campanha.preco;
+
     const pedido = await Pedido.create({
       nome,
       campanhaId,
@@ -29,7 +52,6 @@ router.post("/criar", async (req, res) => {
       status: "pendente"
     });
 
-    // criar pagamento PIX
     const pagamento = await mercadopago.payment.create({
       transaction_amount: valor,
       description: "Compra de números",
@@ -39,17 +61,15 @@ router.post("/criar", async (req, res) => {
       }
     });
 
-    // 👉 SALVA ID DO PAGAMENTO
     pedido.pagamentoId = pagamento.body.id;
     await pedido.save();
 
-    // 👉 PEGA DADOS DO PIX (AQUI É O LUGAR CERTO)
     const dadosPix = pagamento.body.point_of_interaction.transaction_data;
 
-    // 👉 RETORNA PRO FRONT
     res.json({
       qr_code: dadosPix.qr_code,
-      qr_code_base64: dadosPix.qr_code_base64
+      qr_code_base64: dadosPix.qr_code_base64,
+      numeros
     });
 
   } catch (error) {
