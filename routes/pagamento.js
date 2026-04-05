@@ -25,12 +25,12 @@ router.post("/criar", async (req, res) => {
       nome,
       campanhaId,
       numeros,
-      valor
+      valor,
+      status: "pendente"
     });
 
     // criar pagamento PIX
     const pagamento = await mercadopago.payment.create({
-      const dadosPix = pagamento.body.point_of_interaction.transaction_data;
       transaction_amount: valor,
       description: "Compra de números",
       payment_method_id: "pix",
@@ -39,18 +39,22 @@ router.post("/criar", async (req, res) => {
       }
     });
 
-    console.log("RESPOSTA MP:", pagamento.body);
+    // 👉 SALVA ID DO PAGAMENTO
+    pedido.pagamentoId = pagamento.body.id;
+    await pedido.save();
 
-    const pixData = pagamento.body.point_of_interaction?.transaction_data;
+    // 👉 PEGA DADOS DO PIX (AQUI É O LUGAR CERTO)
+    const dadosPix = pagamento.body.point_of_interaction.transaction_data;
 
-  res.json({
-  qr_code: dadosPix.qr_code,
-  qr_code_base64: dadosPix.qr_code_base64
-});
+    // 👉 RETORNA PRO FRONT
+    res.json({
+      qr_code: dadosPix.qr_code,
+      qr_code_base64: dadosPix.qr_code_base64
+    });
 
-  } catch (err) {
-    console.log("❌ ERRO PIX:", err);
-    res.status(500).json({ erro: "Erro ao gerar PIX" });
+  } catch (error) {
+    console.log("❌ ERRO PIX:", error);
+    res.status(500).json({ error: "Erro ao gerar pagamento" });
   }
 });
 
