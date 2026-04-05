@@ -16,4 +16,5 @@ const PedidoSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model("Pedido", PedidoSchema);
+// 🔥 CORREÇÃO AQUI
+module.exports = mongoose.models.Pedido || mongoose.model("Pedido", PedidoSchema);
