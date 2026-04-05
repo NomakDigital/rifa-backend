@@ -1,12 +1,19 @@
-
 const mongoose = require("mongoose");
 
-const Pedido = mongoose.model("Pedido", {
-  campanhaId: String,
+const PedidoSchema = new mongoose.Schema({
   nome: String,
-  numeros: Array,
+  campanhaId: String,
+  numeros: [Number],
   valor: Number,
-  pago: { type: Boolean, default: false }
+  pagamentoId: String,
+  status: {
+    type: String,
+    default: "pendente"
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-module.exports = Pedido;
+module.exports = mongoose.model("Pedido", PedidoSchema);
