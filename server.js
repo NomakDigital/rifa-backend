@@ -31,3 +31,15 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🚀 Servidor rodando");
 });
+
+app.get("/criar-campanha", async (req, res) => {
+  const Campanha = require("./models/Campanha");
+
+  const nova = await Campanha.create({
+    nome: "BMW 325i",
+    preco: 5,
+    numerosTotal: 10000
+  });
+
+  res.json(nova);
+});
