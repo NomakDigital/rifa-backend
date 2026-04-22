@@ -79,3 +79,20 @@ router.post("/criar", async (req, res) => {
 });
 
 module.exports = router;
+
+router.get("/status/:id", async (req, res) => {
+  try {
+    const Pedido = require("../models/Pedido");
+
+    const pedido = await Pedido.findById(req.params.id);
+
+    if (!pedido) {
+      return res.json({ status: "nao_encontrado" });
+    }
+
+    res.json({ status: pedido.status || "pendente" });
+
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao buscar status" });
+  }
+});
