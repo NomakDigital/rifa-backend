@@ -9,6 +9,7 @@ mercadopago.configure({
 const Pedido = require("../models/Pedido");
 const Campanha = require("../models/Campanha");
 
+// CRIAR PIX
 router.post("/criar", async (req, res) => {
   try {
     const { nome, campanhaId, qtd } = req.body;
@@ -16,44 +17,42 @@ router.post("/criar", async (req, res) => {
     const campanha = await Campanha.findById(campanhaId);
 
     if (!campanha) {
-      return res.status(404).json({ error: "Campanha não encontrada" });
+      return res.status(404).json({ erro: "Campanha não encontrada" });
     }
 
-    // pegar pedidos pendentes
-    const pedidosPendentes = await Pedido.find({
-      campanhaId,
-      status: "pendente"
-    });
-
-    let numerosUsados = [
-      ...campanha.numerosVendidos,
-      ...pedidosPendentes.flatMap(p => p.numeros)
-    ];
-
-    // gerar números únicos
+    // gerar números
     const numeros = [];
-
-    while (numeros.length < qtd) {
-      const num = Math.floor(Math.random() * campanha.numerosTotal);
-
-      if (!numerosUsados.includes(num)) {
-        numeros.push(num);
-        numerosUsados.push(num);
-      }
+    for (let i = 0; i < qtd; i++) {
+      numeros.push(Math.floor(Math.random() * 10000));
     }
 
-    const valor = qtd * campanha.preco;
+    // 💰 CALCULO PROFISSIONAL
+    let valor = campanha.preco * qtd;
+
+    // 🔥 PROMOÇÃO (se existir)
+    if (campanha.promocaoQtd > 0 && campanha.promocaoPreco > 0) {
+      const grupos = Math.floor(qtd / campanha.promocaoQtd);
+      const resto = qtd % campanha.promocaoQtd;
+
+      valor =
+        grupos * campanha.promocaoPreco +
+        resto * campanha.preco;
+    }
+
+    // evitar erro com valores muito baixos
+    if (valor < 0.5) {
+      valor = 0.5;
+    }
 
     const pedido = await Pedido.create({
       nome,
       campanhaId,
       numeros,
-      valor,
-      status: "pendente"
+      valor
     });
 
     const pagamento = await mercadopago.payment.create({
-      transaction_amount: valor,
+      transaction_amount: Number(valor),
       description: "Compra de números",
       payment_method_id: "pix",
       payer: {
@@ -61,29 +60,25 @@ router.post("/criar", async (req, res) => {
       }
     });
 
-    pedido.pagamentoId = pagamento.body.id;
-    await pedido.save();
-
-    const dadosPix = pagamento.body.point_of_interaction.transaction_data;
+    const dadosPix =
+      pagamento.body.point_of_interaction.transaction_data;
 
     res.json({
       qr_code: dadosPix.qr_code,
       qr_code_base64: dadosPix.qr_code_base64,
-      numeros
+      pedidoId: pedido._id,
+      valor
     });
 
-  } catch (error) {
-    console.log("❌ ERRO PIX:", error);
-    res.status(500).json({ error: "Erro ao gerar pagamento" });
+  } catch (err) {
+    console.log("ERRO PIX:", err);
+    res.status(500).json({ erro: "Erro ao gerar PIX" });
   }
 });
 
-module.exports = router;
-
+// STATUS
 router.get("/status/:id", async (req, res) => {
   try {
-    const Pedido = require("../models/Pedido");
-
     const pedido = await Pedido.findById(req.params.id);
 
     if (!pedido) {
@@ -96,3 +91,5 @@ router.get("/status/:id", async (req, res) => {
     res.status(500).json({ erro: "Erro ao buscar status" });
   }
 });
+
+module.exports = router;
