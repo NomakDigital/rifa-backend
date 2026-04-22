@@ -51,6 +51,10 @@ router.post("/criar", async (req, res) => {
       valor
     });
 
+    await Campanha.findByIdAndUpdate(campanhaId, {
+  $push: { numerosVendidos: { $each: numeros } }
+});
+    
     const pagamento = await mercadopago.payment.create({
       transaction_amount: Number(valor),
       description: "Compra de números",
