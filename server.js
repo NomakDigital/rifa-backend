@@ -43,3 +43,15 @@ app.get("/criar-campanha", async (req, res) => {
 
   res.json(nova);
 });
+
+app.get("/configurar-rifa", async (req, res) => {
+  const Campanha = require("./models/Campanha");
+
+  await Campanha.updateMany({}, {
+    preco: 0.10,
+    promocaoQtd: 10,
+    promocaoPreco: 1
+  });
+
+  res.send("Rifa configurada: 10 centavos + promo 10 por R$1");
+});
