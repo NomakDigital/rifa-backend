@@ -1,45 +1,35 @@
 const express = require("express");
 const router = express.Router();
-const mercadopago = require("mercadopago");
-
-mercadopago.configure({
-  access_token: process.env.MP_TOKEN
-});
-
 const Pedido = require("../models/Pedido");
-const Campanha = require("../models/Campanha");
 
 router.post("/", async (req, res) => {
   try {
-    const { type, data } = req.body;
+    console.log("WEBHOOK:", req.body);
 
-    if (type === "payment") {
-      const paymentId = data.id;
+    const paymentId = req.body.data?.id;
 
-      const payment = await mercadopago.payment.findById(paymentId);
+    if (!paymentId) return res.sendStatus(200);
 
-      if (payment.body.status === "approved") {
-        const pedido = await Pedido.findOne({
-          pagamentoId: paymentId
-        });
+    const mercadopago = require("mercadopago");
 
-        if (pedido && pedido.status !== "pago") {
-          pedido.status = "pago";
-          await pedido.save();
+    mercadopago.configure({
+      access_token: process.env.MP_TOKEN
+    });
 
-          const campanha = await Campanha.findById(pedido.campanhaId);
+    const pagamento = await mercadopago.payment.findById(paymentId);
 
-          campanha.numerosVendidos.push(...pedido.numeros);
-          await campanha.save();
-
-          console.log("✅ PAGAMENTO CONFIRMADO:", paymentId);
-        }
-      }
+    if (pagamento.body.status === "approved") {
+      // aqui você pode vincular ao pedido (simplificado)
+      await Pedido.updateMany(
+        { status: "pendente" },
+        { status: "aprovado" }
+      );
     }
 
     res.sendStatus(200);
-  } catch (error) {
-    console.log("❌ ERRO WEBHOOK:", error);
+
+  } catch (err) {
+    console.log(err);
     res.sendStatus(500);
   }
 });
