@@ -1,16 +1,31 @@
 const express = require("express");
 const router = express.Router();
 const Campanha = require("../models/Campanha");
+const Pedido = require("../models/Pedido");
 
-// LISTAR CAMPANHA
+// listar campanhas
 router.get("/", async (req, res) => {
-  try {
-    const campanhas = await Campanha.find();
-    res.json(campanhas);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ erro: "Erro ao buscar campanhas" });
-  }
+  const campanhas = await Campanha.find();
+
+  const resultado = campanhas.map(c => ({
+    _id: c._id,
+    nome: c.nome,
+    preco: c.preco,
+    total: c.numerosTotal,
+    vendidos: c.numerosVendidos.length,
+    restantes: c.numerosTotal - c.numerosVendidos.length
+  }));
+
+  res.json(resultado);
+});
+
+// prova social (últimas compras)
+router.get("/compras", async (req, res) => {
+  const pedidos = await Pedido.find()
+    .sort({ _id: -1 })
+    .limit(5);
+
+  res.json(pedidos);
 });
 
 module.exports = router;
